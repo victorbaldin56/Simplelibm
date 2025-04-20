@@ -2,7 +2,7 @@
 #include <limits>
 
 #include "detail/fpbits.hh"
-#include "math/math.h"
+#include "simple/math.h"
 
 namespace {
 
