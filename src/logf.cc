@@ -1,8 +1,8 @@
 #include <cerrno>
 #include <limits>
 
-#include "detail/fpbits.hh"
 #include "simple/math.h"
+#include "support/fpbits.hh"
 
 namespace {
 
@@ -1059,6 +1059,11 @@ float simpleLogf(float x) {
   bits.setExp(0);
   auto new_x = bits.getValue();
 
-  auto index = (sig & (0xff << 15)) >> 15;
-  auto r = kLogfTable[index];
+  auto sig_part = sig & (0xff << 15);
+  auto index = sig_part >> 15;
+  auto t = kLogfTable[index];
+  detail::FpBits xibits(sig_part);
+  auto xi = xibits.getValue();
+  auto r = new_x / xi - 1;
+  return exp * kLog2 + t;
 }
