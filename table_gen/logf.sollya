@@ -1,0 +1,8 @@
+prec = 500;
+
+n = 1024;
+for i from 0 to n-1 do {
+  x = 1 + i / n;
+  y = round(log(x), D, RN);
+  print(y, ",");
+};
