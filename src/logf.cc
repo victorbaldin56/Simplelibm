@@ -1,7 +1,8 @@
+#include "lalogf/logf.h"
+
 #include <cerrno>
 #include <limits>
 
-#include "simple/math.h"
 #include "support/fpbits.hh"
 
 namespace {
@@ -1044,7 +1045,7 @@ constexpr float kLogfTable[] = {
 };
 }
 
-float simpleLogf(float x) {
+float lalogf(float x) {
   if (x < 0) {
     errno = ERANGE;
     return std::numeric_limits<float>::quiet_NaN();

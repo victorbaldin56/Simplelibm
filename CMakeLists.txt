@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
-project(Simplelibm)
+project(lalogf)
 
-add_library(simplelibm src/logf.cc)
-target_include_directories(simplelibm PUBLIC include)
-target_compile_features(simplelibm PRIVATE cxx_std_17)
+add_library(lalogf src/logf.cc)
+target_include_directories(lalogf PUBLIC include)
+target_compile_features(lalogf PRIVATE cxx_std_17)
 
 option(ENABLE_TESTS "Enable testing" ON)
 if (ENABLE_TESTS)

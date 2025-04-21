@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-float simpleLogf(float x);
+float lalogf(float x);
 
 #ifdef __cplusplus
 }
