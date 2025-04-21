@@ -1060,8 +1060,8 @@ float lalogf(float x) {
   bits.setExp(0);
   auto new_x = bits.getValue();
 
-  auto sig_part = sig & (0xff << 15);
-  auto index = sig_part >> 15;
+  auto sig_part = sig & 0x7fe000;
+  auto index = sig_part >> 13;
   auto t = kLogfTable[index];
   detail::FpBits xibits(sig_part);
   auto xi = xibits.getValue();
