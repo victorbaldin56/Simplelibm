@@ -16,7 +16,7 @@ constexpr auto kLookupBits = 10;
 /**
  * Lookup table for 2nd argument reduction.
  *
- * Generated with sollya table_gen/logf.sollya
+ * Generated with sollya sollya_gen/logf.sollya
  */
 constexpr float kLogfTable[] = {
     0,
@@ -1045,7 +1045,19 @@ constexpr float kLogfTable[] = {
     0.6926587800618364543225879970123060047626495361328125,
 };
 
-float taylorApproximation(float r) {}
+float minimax10(float x) {
+  return -1.0999713786321888744282524306711803482902035714318912966143151291742520698881819046972309339427198437988408841192722320556640625e-32 +
+         x * (1 +
+              x * (-0.5 +
+                   x * (0.333333333333333314829616256247390992939472198486328125 +
+                        x * (-0.25 +
+                             x * (0.200000000090545249076257050546701066195964813232421875 +
+                                  x * (-0.1666666666656848594385564865660853683948516845703125 +
+                                       x * (0.142719043112796095673644458656781353056430816650390625 +
+                                            x * (-0.1250023357528640410851750175424967892467975616455078125 +
+                                                 x * (66.9456080855010924324233201332390308380126953125 +
+                                                      x * 1.294633270128486390859734456171281635761260986328125)))))))));
+}
 }
 
 float lalogf(float x) {
@@ -1069,5 +1081,5 @@ float lalogf(float x) {
   detail::FpBits xibits(sig_part);
   auto xi = xibits.getValue();
   auto r = new_x / xi - 1;
-  return exp * kLog2 + t + taylorApproximation(r);
+  return exp * kLog2 + t + minimax10(r);
 }

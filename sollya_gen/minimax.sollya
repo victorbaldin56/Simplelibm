@@ -1,0 +1,5 @@
+prec = 500;
+f = log(1+x);
+interval = [-1b-10,1b-10];
+p = fpminimax(f, 10, [|D...|], interval, absolute, floating);
+p;
