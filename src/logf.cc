@@ -1,5 +1,6 @@
 #include "lalogf/logf.h"
 
+#include <cassert>
 #include <cerrno>
 #include <limits>
 
@@ -1043,6 +1044,8 @@ constexpr float kLogfTable[] = {
     0.69217014091211870319142462903982959687709808349609375,
     0.6926587800618364543225879970123060047626495361328125,
 };
+
+float taylorApproximation(float r) {}
 }
 
 float lalogf(float x) {
@@ -1060,11 +1063,11 @@ float lalogf(float x) {
   bits.setExp(0);
   auto new_x = bits.getValue();
 
-  auto sig_part = sig & 0x7fe000;
+  auto sig_part = sig & 0x7fe000;  // oldest 10 bits to index lookup table
   auto index = sig_part >> 13;
   auto t = kLogfTable[index];
   detail::FpBits xibits(sig_part);
   auto xi = xibits.getValue();
   auto r = new_x / xi - 1;
-  return exp * kLog2 + t;
+  return exp * kLog2 + t + taylorApproximation(r);
 }

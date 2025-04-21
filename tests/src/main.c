@@ -9,6 +9,6 @@ int main(int argc, char** argv) {
   }
 
   float x = strtof(argv[1], NULL);
-  printf("%g\n", lalogf(x));
+  printf("%.10f\n", lalogf(x));
   return 0;
 }
