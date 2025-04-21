@@ -1066,14 +1066,16 @@ float minimax10(float x) {
 }
 
 float lalogf(float x) {
+  using Limits = std::numeric_limits<float>;
+
   if (x < 0) {
     errno = EDOM;
-    return std::numeric_limits<float>::quiet_NaN();
+    return Limits::quiet_NaN();
   }
 
   if (x == 0) {
     errno = ERANGE;
-    return -std::numeric_limits<float>::infinity();
+    return -Limits::infinity();
   }
 
   constexpr auto kLog2 = 0.69314718f;
