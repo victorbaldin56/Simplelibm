@@ -9,7 +9,10 @@ namespace detail {
 class FpBits {
  public:
   FpBits(float x = 0.f) noexcept : bits_(bitCast<std::uint32_t>(x)) {}
-  FpBits(std::uint32_t sig) noexcept : FpBits() { setSig(sig); }
+  FpBits(std::uint32_t sig) noexcept : FpBits() {
+    setSig(sig);
+    setExp(0);
+  }
   auto expBits() const noexcept { return bits_ & kExpMask; }
   auto expValue() const noexcept {
     return static_cast<std::int32_t>(expBits() >> kSigLen) - kExpBias;
@@ -18,9 +21,9 @@ class FpBits {
 
   auto getValue() const noexcept { return bitCast<float>(bits_); }
 
-  void setExp(std::uint32_t exp) noexcept {
+  void setExp(std::int32_t exp) noexcept {
     bits_ |= kExpMask;
-    bits_ &= (exp << kSigLen);
+    bits_ &= ((exp + kExpBias) << kSigLen);
   }
 
   void setSig(std::uint32_t sig) noexcept {
