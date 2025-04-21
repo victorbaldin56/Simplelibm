@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "simple/math.h"
+#include "lalogf/logf.h"
 
-int main() {
-  float x;
-  if (scanf("%f", &x) != 1) {
-    fprintf(stderr, "Invalid input format\n");
-    return EXIT_FAILURE;
+int main(int argc, char** argv) {
+  if (argc < 2) {
+    fprintf(stderr, "Usage: ./a.out <floating-point number>");
   }
 
-  printf("%g\n", simpleLogf(x));
+  float x = strtof(argv[1], NULL);
+  printf("%g\n", lalogf(x));
   return 0;
 }
