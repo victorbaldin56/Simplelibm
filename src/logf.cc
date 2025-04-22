@@ -1,6 +1,5 @@
 #include "lalogf/logf.h"
 
-#include <cassert>
 #include <cerrno>
 #include <limits>
 
@@ -4118,31 +4117,63 @@ constexpr float kLogfTable[] = {
 };
 
 /**
- * minimax series expansion for log(x) in [1, 0x1.001p0f]
+ * minimax series expansion for log(x) in [0.9, 1.11]. Interval is wide
+ * because attempts to make it small lead to huge coefficients and overflow in
+ * double arithmetics.
  *
  * Generated with sollya sollya_gen/minimax.sollya
  */
 auto minimaxLnNear1(float x) noexcept {
-  assert(1.f <= x && x <= 0x1.001p0f);
-  return -0x1.903b3c7fbb016p1 +
-         x * (0x1.887daa307b19ep3 +
-              x * (-0x1.121f53e3c0874p5 +
-                   x * (0x1.3188bbecaaf9ep6 +
-                        x * (-0x1.f82027ec28f74p6 +
-                             x * (0x1.2aa0e299fbd2cp7 +
-                                  x * (-0x1.d4836cc21f6cp6 +
-                                       x * (0x1.41ae78d0fda3p5 +
-                                            x * (0x1.1073899fafb4p5 +
-                                                 x * (-0x1.0804a52c25eb8p6 +
-                                                      x * (0x1.bf1efa8a41888p5 +
-                                                           x * (-0x1.e726cb1185748p4 +
-                                                                x * (0x1.6881a991311b4p3 +
-                                                                     x * (-0x1.619dcc66e5212p1 +
-                                                                          x * (0x1.a1b2a67c72d7p-2 +
-                                                                               x * (-0x1.c3de4e71807p-6)))))))))))))));
+  return -0x1.a835877263f16p1 +
+         x * (0x1.ddf193f1e7676p3 +
+              x * (-0x1.a03e944622a1cp5 +
+                   x * (0x1.2b18b316f87ap7 +
+                        x * (-0x1.4ea5199787b92p8 +
+                             x * (0x1.24c344ba2b96ep9 +
+                                  x * (-0x1.9412f323492aep9 +
+                                       x * (0x1.ba5953f94dacp9 +
+                                            x * (-0x1.805567d0889b2p9 +
+                                                 x * (0x1.07bd69eb9801ep9 +
+                                                      x * (-0x1.1a9d217a81989p8 +
+                                                           x * (0x1.cf4c838bef954p6 +
+                                                                x * (-0x1.18b1e12b62df3p5 +
+                                                                     x * (0x1.da0c868a3aea7p2 +
+                                                                          x * (-0x1.f25c47594c948p-1 +
+                                                                               x * 0x1.eb4e838528c8p-5))))))))))))));
+}
+
+/**
+ * interval [0.7, 1.35]
+ */
+auto minimaxLnNear1Wide(float x) noexcept {
+  return -0x1.ac8edb0864a09p1 +
+         x * (0x1.eda9bbd2a6972p3 +
+              x * (-0x1.baa474ce68bd4p5 +
+                   x * (0x1.46692c81a8386p7 +
+                        x * (-0x1.759527de9c869p8 +
+                             x * (0x1.4d404a9e03d0ep9 +
+                                  x * (-0x1.d37f4f3ca2edp9 +
+                                       x * (0x1.0341cf60e7aa7p10 +
+                                            x * (-0x1.c6fdeb60d342ap9 +
+                                                 x * (0x1.3a575451504f7p9 +
+                                                      x * (-0x1.520e52e160f58p8 +
+                                                           x * (0x1.153be2d753855p7 +
+                                                                x * (-0x1.4f10f70772e72p5 +
+                                                                     x * (0x1.19591d083c62fp3 +
+                                                                          x * (-0x1.253a56786780dp0 +
+                                                                               x * 0x1.1dbac929f9aaep-4))))))))))))));
 }
 }
 
+/**
+ * Low Accuracy logf function.
+ *
+ * Algorthm:
+ * 1. Filter out-of-domain values and special cases
+ * 2. First argument reduction (to range [1, 2))
+ * 3. Table lookup
+ * 4. Second argument reduciton (remaining bits of mantissa)
+ */
 float lalogf(float x) {
   using Limits = std::numeric_limits<float>;
 
@@ -4158,6 +4189,12 @@ float lalogf(float x) {
 
   if (x == 1.f) {
     return 0.f;
+  }
+
+  // log is close to 0, so this is a special case, a lot of precision can be
+  // losen without it
+  if (0.7f < x && x < 1.35f) {
+    return minimaxLnNear1Wide(x);
   }
 
   constexpr auto kLog2 =
