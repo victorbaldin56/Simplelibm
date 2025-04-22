@@ -15,15 +15,15 @@ class FpBits {
   }
   auto expBits() const noexcept { return bits_ & kExpMask; }
   auto expValue() const noexcept {
-    return static_cast<std::int32_t>(expBits() >> kSigLen) - kExpBias;
+    return static_cast<std::int32_t>((expBits() >> kSigLen) - kExpBias);
   }
   auto sig() const noexcept { return bits_ & kSigMask; }
 
   auto getValue() const noexcept { return bitCast<float>(bits_); }
 
   void setExp(std::int32_t exp) noexcept {
-    bits_ |= kExpMask;
-    bits_ &= ((exp + kExpBias) << kSigLen);
+    bits_ &= ~kExpMask;
+    bits_ |= ((static_cast<std::uint32_t>(exp) + kExpBias) << kSigLen);
   }
 
   void setSig(std::uint32_t sig) noexcept {
@@ -38,7 +38,7 @@ class FpBits {
   static constexpr std::uint32_t kExpMask = ((1 << kExpLen) - 1) << kSigLen;
   static constexpr std::uint32_t kSigMask = (1 << kSigLen) - 1;
 
-  static constexpr std::int32_t kExpBias = 0x7f;
+  static constexpr std::uint32_t kExpBias = 0x7f;
 
  private:
   std::uint32_t bits_;

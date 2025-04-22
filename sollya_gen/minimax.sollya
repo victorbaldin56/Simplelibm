@@ -1,5 +1,6 @@
 prec = 500;
-f = log(1+x);
-interval = [-1b-10,1b-10];
-p = fpminimax(f, 10, [|D...|], interval, absolute, floating);
+display=hexadecimal;
+f = log(x);
+interval = [1.0, 0x1.2p0];
+p = fpminimax(f, 15, [|D...|], interval, absolute, floating);
 p;
