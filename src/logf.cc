@@ -1,6 +1,7 @@
 #include "lalogf/logf.h"
 
 #include <cerrno>
+#include <cmath>
 #include <limits>
 
 #include "support/fpbits.hh"
@@ -8,16 +9,11 @@
 namespace {
 
 /**
- * Number of bits forming index to lookup table.
- */
-constexpr auto kLookupBits = 12;
-
-/**
  * Lookup table for 2nd argument reduction.
  *
  * Generated with sollya sollya_gen/logf.sollya
  */
-constexpr float kLogfTable[] = {
+constexpr double kLogfTable[] = {
     0,
     0x1.fff000aaa2ab1p-13,
     0x1.ffe002aa6ab11p-12,
@@ -4116,52 +4112,16 @@ constexpr float kLogfTable[] = {
     0x1.62d42fafa2499p-1,
 };
 
-/**
- * minimax series expansion for log(x) in [0.9, 1.11]. Interval is wide
- * because attempts to make it small lead to huge coefficients and overflow in
- * double arithmetics.
- *
- * Generated with sollya sollya_gen/minimax.sollya
- */
-auto minimaxLnNear1(float x) noexcept {
-  return -0x1.a835877263f16p1 +
-         x * (0x1.ddf193f1e7676p3 +
-              x * (-0x1.a03e944622a1cp5 +
-                   x * (0x1.2b18b316f87ap7 +
-                        x * (-0x1.4ea5199787b92p8 +
-                             x * (0x1.24c344ba2b96ep9 +
-                                  x * (-0x1.9412f323492aep9 +
-                                       x * (0x1.ba5953f94dacp9 +
-                                            x * (-0x1.805567d0889b2p9 +
-                                                 x * (0x1.07bd69eb9801ep9 +
-                                                      x * (-0x1.1a9d217a81989p8 +
-                                                           x * (0x1.cf4c838bef954p6 +
-                                                                x * (-0x1.18b1e12b62df3p5 +
-                                                                     x * (0x1.da0c868a3aea7p2 +
-                                                                          x * (-0x1.f25c47594c948p-1 +
-                                                                               x * 0x1.eb4e838528c8p-5))))))))))))));
-}
-
-/**
- * interval [0.7, 1.35]
- */
-auto minimaxLnNear1Wide(float x) noexcept {
-  return -0x1.ac8edb0864a09p1 +
-         x * (0x1.eda9bbd2a6972p3 +
-              x * (-0x1.baa474ce68bd4p5 +
-                   x * (0x1.46692c81a8386p7 +
-                        x * (-0x1.759527de9c869p8 +
-                             x * (0x1.4d404a9e03d0ep9 +
-                                  x * (-0x1.d37f4f3ca2edp9 +
-                                       x * (0x1.0341cf60e7aa7p10 +
-                                            x * (-0x1.c6fdeb60d342ap9 +
-                                                 x * (0x1.3a575451504f7p9 +
-                                                      x * (-0x1.520e52e160f58p8 +
-                                                           x * (0x1.153be2d753855p7 +
-                                                                x * (-0x1.4f10f70772e72p5 +
-                                                                     x * (0x1.19591d083c62fp3 +
-                                                                          x * (-0x1.253a56786780dp0 +
-                                                                               x * 0x1.1dbac929f9aaep-4))))))))))))));
+// generated with sollya sollya_gen/minimax.sollya
+float minimaxLnNear1(float x) noexcept {
+  return std::fma(
+      x,
+      std::fma(
+          x,
+          std::fma(x, std::fma(x, -0x1.5553825c2686fp-3, 0x1.fffea14d34134p-1),
+                   -0x1.3fffa8355313dp1),
+          0x1.d5553807c8777p1),
+      -0x1p1);
 }
 }
 
@@ -4177,6 +4137,7 @@ auto minimaxLnNear1Wide(float x) noexcept {
 float lalogf(float x) {
   using Limits = std::numeric_limits<float>;
 
+  // filtering out-of-domain values
   if (x < 0.f) {
     errno = EDOM;
     return Limits::quiet_NaN();
@@ -4187,33 +4148,39 @@ float lalogf(float x) {
     return -Limits::infinity();
   }
 
+  // handling exact points
   if (x == 1.f) {
     return 0.f;
   }
 
   // log is close to 0, so this is a special case, a lot of precision can be
   // losen without it
-  if (0.7f < x && x < 1.35f) {
-    return minimaxLnNear1Wide(x);
-  }
+  // if (0.7f < x && x < 1.35f) {
+  //   return minimaxLnNear1Wide(x);
+  // }
 
-  constexpr auto kLog2 =
-      0x1.62e42fefa39ef35793c7673007e5ed5e81e6864ce5316c5b141a2eb71755f457cf70ec40dbd75930ab2aa5f695f43621da5d5c6b827042884eae765222d38p-1f;
+  // contants
+  constexpr std::uint32_t kLookupBits = 12;
+  constexpr std::uint32_t kLookupBitsOffset =
+      detail::FpBits::kSigLen - kLookupBits;
+  constexpr std::uint32_t kLookupMask = ((1 << kLookupBits) - 1)
+                                        << kLookupBitsOffset;
+  constexpr float kLog2 =
+      0x1.62e42fefa39ef35793c7673007e5ed5e81e6864ce5316c5b141a2eb71755f457cf70ec40dbd75930ab2aa5f695f43621da5d5c6b827042884eae765222d38p-1;
 
   detail::FpBits bits(x);
   auto exp = bits.expValue();
   auto sig = bits.sig();
 
   bits.setExp(0);
-  auto new_x = bits.getValue();
+  float new_x = bits.getValue();
 
-  constexpr auto kLookupBitsOffset = detail::FpBits::kSigLen - kLookupBits;
-  constexpr auto kLookupMask = ((1 << kLookupBits) - 1) << kLookupBitsOffset;
-  auto sig_part = sig & kLookupMask;  // oldest 10 bits to index lookup table
-  auto index = sig_part >> kLookupBitsOffset;
-  auto t = kLogfTable[index];
+  std::uint32_t sig_part =
+      sig & kLookupMask;  // oldest 12 bits to index lookup table
+  std::uint32_t index = sig_part >> kLookupBitsOffset;
+  double t = kLogfTable[index];
   detail::FpBits xibits(sig_part);
-  auto xi = xibits.getValue();
-  auto r = new_x / xi;
-  return exp * kLog2 + t + minimaxLnNear1(r);
+  double xi = xibits.getValue();
+  double r = new_x / xi;
+  return std::fma(exp, kLog2, t) + minimaxLnNear1(r);
 }

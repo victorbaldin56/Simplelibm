@@ -4,6 +4,7 @@ project(lalogf)
 add_library(lalogf src/logf.cc)
 target_include_directories(lalogf PUBLIC include)
 target_compile_features(lalogf PRIVATE cxx_std_17)
+target_compile_options(lalogf PRIVATE "-march=native")
 
 option(ENABLE_TESTS "Enable testing" ON)
 if (ENABLE_TESTS)
