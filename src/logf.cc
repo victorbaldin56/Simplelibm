@@ -4113,7 +4113,7 @@ constexpr double kLogfTable[] = {
 };
 
 // generated with sollya sollya_gen/minimax.sollya
-float minimaxLnNear1(float x) noexcept {
+double minimaxLnNear1(double x) noexcept {
   return std::fma(
       x,
       std::fma(
@@ -4152,12 +4152,6 @@ float lalogf(float x) {
   if (x == 1.f) {
     return 0.f;
   }
-
-  // log is close to 0, so this is a special case, a lot of precision can be
-  // losen without it
-  // if (0.7f < x && x < 1.35f) {
-  //   return minimaxLnNear1Wide(x);
-  // }
 
   // contants
   constexpr std::uint32_t kLookupBits = 12;
