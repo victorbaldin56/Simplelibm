@@ -5,7 +5,7 @@
 
 #include "benchmark/benchmark.h"
 
-static void BM_LogfLatency(benchmark::State& state) {
+void BM_LogfLatency(benchmark::State& state) {
   float x = 1.2345f;
 
   std::uint64_t total_cycles = 0;
@@ -24,6 +24,8 @@ static void BM_LogfLatency(benchmark::State& state) {
   state.counters["CPE"] =
       benchmark::Counter(cpe, benchmark::Counter::kDefaults);
 }
+
+void BM_LogfAvx512Throughput(benchmark::State& state) {}
 
 // Register the benchmark
 BENCHMARK(BM_LogfLatency)

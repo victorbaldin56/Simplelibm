@@ -6,7 +6,7 @@ import numpy as np
 import unittest
 from test_functions import testLog, getUlp, correctLog
 
-MAX_ULP_ERROR = 3.5
+MAX_ULP_ERROR = 1.5
 
 class TestLogf(unittest.TestCase):
   def test_ulp_precision(self):

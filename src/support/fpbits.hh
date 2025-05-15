@@ -1,12 +1,26 @@
 #pragma once
 
+#include <immintrin.h>
+
 #include <cstdint>
 
 #include "bit_cast.hh"
 
 namespace detail {
 
-class FpBits {
+static constexpr auto kSigLen = 23;
+static constexpr auto kExpLen = 8;
+
+static constexpr std::uint32_t kExpMask = ((1 << kExpLen) - 1) << kSigLen;
+static constexpr std::uint32_t kSigMask = (1 << kSigLen) - 1;
+
+static constexpr std::uint32_t kExpBias = 0x7f;
+
+template <typename T>
+class FpBits;
+
+template <>
+class FpBits<float> final {
  public:
   FpBits(float x = 0.f) noexcept : bits_(bitCast<std::uint32_t>(x)) {}
   FpBits(std::uint32_t sig) noexcept : FpBits() {
@@ -31,16 +45,48 @@ class FpBits {
     bits_ &= sig;
   }
 
- public:
-  static constexpr auto kSigLen = 23;
-  static constexpr auto kExpLen = 8;
-
-  static constexpr std::uint32_t kExpMask = ((1 << kExpLen) - 1) << kSigLen;
-  static constexpr std::uint32_t kSigMask = (1 << kSigLen) - 1;
-
-  static constexpr std::uint32_t kExpBias = 0x7f;
-
  private:
   std::uint32_t bits_;
+};
+
+template <>
+class FpBits<__m512> final {
+ public:
+  FpBits(__m512 x = _mm512_set1_ps(0.0f)) noexcept
+      : bits_(_mm512_castps_si512(x)) {}
+  FpBits(__m512i sig) noexcept : FpBits() {
+    setSig(sig);
+    setExp(_mm512_set1_epi32(0.f));
+  }
+
+  auto expBits() const noexcept {
+    return _mm512_and_epi32(bits_, _mm512_set1_epi32(kExpMask));
+  }
+
+  auto expValue() const noexcept {
+    return _mm512_sub_epi32(_mm512_srli_epi32(expBits(), kSigLen),
+                            _mm512_set1_epi32(kExpBias));
+  }
+
+  auto sig() const noexcept {
+    return _mm512_and_epi32(bits_, _mm512_set1_epi32(kSigMask));
+  }
+
+  auto getValue() const noexcept { return _mm512_castsi512_ps(bits_); }
+
+  void setExp(__m512i exp_unbiased) noexcept {
+    bits_ = _mm512_andnot_epi32(_mm512_set1_epi32(kExpMask), bits_);
+    __m512i biased = _mm512_slli_epi32(
+        _mm512_add_epi32(exp_unbiased, _mm512_set1_epi32(kExpBias)), kSigLen);
+    bits_ = _mm512_or_epi32(bits_, biased);
+  }
+
+  void setSig(__m512i new_sig) noexcept {
+    bits_ = _mm512_andnot_epi32(_mm512_set1_epi32(kSigMask), bits_);
+    bits_ = _mm512_or_epi32(bits_, new_sig);
+  }
+
+ private:
+  __m512i bits_;
 };
 }  // namespace detail
