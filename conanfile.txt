@@ -1,0 +1,6 @@
+[requires]
+benchmark/1.9.1
+
+[generators]
+CMakeDeps
+CMakeToolchain

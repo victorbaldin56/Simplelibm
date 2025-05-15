@@ -1,0 +1,15 @@
+2025-05-15T09:41:53+00:00
+Running ./release/bench/bench
+Run on (12 X 4400 MHz CPU s)
+CPU Caches:
+  L1 Data 48 KiB (x6)
+  L1 Instruction 32 KiB (x6)
+  L2 Unified 512 KiB (x6)
+  L3 Unified 12288 KiB (x1)
+Load Average: 0.19, 0.10, 0.02
+***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
+name,iterations,real_time,cpu_time,time_unit,bytes_per_second,items_per_second,label,error_occurred,error_message,"CPE"
+"BM_LogfLatency/repeats:8_mean",8,14.9154,14.9036,ns,,,,,,16.2298
+"BM_LogfLatency/repeats:8_median",8,14.8786,14.8664,ns,,,,,,16.1879
+"BM_LogfLatency/repeats:8_stddev",8,0.074193,0.0736496,ns,,,,,,0.0863991
+"BM_LogfLatency/repeats:8_cv",8,0.00497425,0.00494174,,,,,,,0.00532349

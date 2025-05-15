@@ -11,3 +11,6 @@ if (ENABLE_TESTS)
   enable_testing()
   add_subdirectory(tests)
 endif()
+
+find_package(benchmark REQUIRED)
+add_subdirectory(bench)
