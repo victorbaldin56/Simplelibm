@@ -4,9 +4,6 @@ import mpmath
 from os import path
 import numpy as np
 
-def correctLog(x):
-  return mpmath.log(x)
-
 def testLog(x):
   ret = subprocess.run([path.join((path.dirname(path.abspath(__file__))), path.pardir, "build/tests/logf"),
                         str(x)], capture_output=True, text=True, check=True)
