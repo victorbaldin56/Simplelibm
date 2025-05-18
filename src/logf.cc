@@ -4135,19 +4135,6 @@ double minimaxLnNear1(double x) noexcept {
                kMinimaxCoeffs[1]),
       kMinimaxCoeffs[0]);
 }
-
-__m512d minimaxLnNear1Avx512(__m512d x) noexcept {
-  const auto c4 = _mm512_set1_pd(kMinimaxCoeffs[4]);
-  const auto c3 = _mm512_set1_pd(kMinimaxCoeffs[3]);
-  const auto c2 = _mm512_set1_pd(kMinimaxCoeffs[2]);
-  const auto c1 = _mm512_set1_pd(kMinimaxCoeffs[1]);
-  const auto c0 = _mm512_set1_pd(kMinimaxCoeffs[0]);
-  return _mm512_fmadd_pd(
-      x,
-      _mm512_fmadd_pd(x, _mm512_fmadd_pd(x, _mm512_fmadd_pd(x, c4, c3), c2),
-                      c1),
-      c0);
-}
 }
 
 /**
@@ -4181,7 +4168,7 @@ float lalogf(float x) {
   auto sig = bits.sig();
 
   bits.setExp(0);
-  float new_x = bits.getValue();
+  auto new_x = bits.getValue();
 
   std::uint32_t sig_part =
       sig & kLookupMask;  // oldest 12 bits to index lookup table
@@ -4196,6 +4183,19 @@ float lalogf(float x) {
 #ifdef __AVX512F__
 
 namespace {
+
+__m512d minimaxLnNear1Avx512(__m512d x) noexcept {
+  const auto c4 = _mm512_set1_pd(kMinimaxCoeffs[4]);
+  const auto c3 = _mm512_set1_pd(kMinimaxCoeffs[3]);
+  const auto c2 = _mm512_set1_pd(kMinimaxCoeffs[2]);
+  const auto c1 = _mm512_set1_pd(kMinimaxCoeffs[1]);
+  const auto c0 = _mm512_set1_pd(kMinimaxCoeffs[0]);
+  return _mm512_fmadd_pd(
+      x,
+      _mm512_fmadd_pd(x, _mm512_fmadd_pd(x, _mm512_fmadd_pd(x, c4, c3), c2),
+                      c1),
+      c0);
+}
 
 auto extract64x8_lo(__m512 x) {
   return _mm512_cvtps_pd(_mm512_extractf32x8_ps(x, 0));

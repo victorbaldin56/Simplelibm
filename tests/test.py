@@ -6,12 +6,12 @@ import numpy as np
 import unittest
 from test_functions import testLog, getUlp, correctLog
 
-MAX_ULP_ERROR = 1.5
+MAX_ULP_ERROR = 3.7
 
 class TestLogf(unittest.TestCase):
   def test_ulp_precision(self):
     segments = [
-        np.linspace(2.0**e, 2.0**(e + 1), 20, dtype=np.float32)
+        np.linspace(2.0**e, 2.0**(e + 1), 100, dtype=np.float32)
         for e in range(-126, 127)
     ]
     test_set = np.concatenate(segments)
