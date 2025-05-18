@@ -4122,10 +4122,11 @@ constexpr double kLog2 =
     0x1.62e42fefa39ef35793c7673007e5ed5e81e6864ce5316c5b141a2eb71755f457cf70ec40dbd75930ab2aa5f695f43621da5d5c6b827042884eae765222d38p-1;
 
 // generated with sollya sollya_gen/minimax.sollya
-constexpr double kMinimaxCoeffs[] = {-0x1p1, 0x1.d5553807c8777p1,
-                                     -0x1.3fffa8355313dp1, 0x1.fffea14d34134p-1,
-                                     -0x1.5553825c2686fp-3};
-double minimaxLnNear1(double x) noexcept {
+constexpr double kMinimaxCoeffs[] = {-0x1.0aa6b5dff6e45p1, 0x1.fff02cd25dec6p1,
+                                     -0x1.7fe8433754464p1, 0x1.5535aeeed4b13p0,
+                                     -0x1.ffc0b327d1a68p-3};
+
+double minimax(double x) noexcept {
   return std::fma(
       x,
       std::fma(x,
@@ -4176,14 +4177,14 @@ float lalogf(float x) {
   detail::FpBits<float> xibits(sig_part);
   double xi = xibits.getValue();
   double r = new_x / xi;
-  return std::fma(exp, kLog2, t) + minimaxLnNear1(r);
+  return std::fma(exp, kLog2, t) + minimax(r);
 }
 
 #ifdef __AVX512F__
 
 namespace {
 
-__m512d minimaxLnNear1Avx512(__m512d x) noexcept {
+__m512d minimax(__m512d x) noexcept {
   const __m512d c4 = _mm512_set1_pd(kMinimaxCoeffs[4]);
   const __m512d c3 = _mm512_set1_pd(kMinimaxCoeffs[3]);
   const __m512d c2 = _mm512_set1_pd(kMinimaxCoeffs[2]);
@@ -4250,10 +4251,8 @@ __m512 lalogf_avx512(__m512 x) {
   __m512d r_lo = new_x_lo / xis_lo;
   __m512d r_hi = new_x_hi / xis_hi;
 
-  __m512d res_lo =
-      _mm512_fmadd_pd(exp_lo, log2_vec, t_lo) + minimaxLnNear1Avx512(r_lo);
-  __m512d res_hi =
-      _mm512_fmadd_pd(exp_hi, log2_vec, t_hi) + minimaxLnNear1Avx512(r_hi);
+  __m512d res_lo = _mm512_fmadd_pd(exp_lo, log2_vec, t_lo) + minimax(r_lo);
+  __m512d res_hi = _mm512_fmadd_pd(exp_hi, log2_vec, t_hi) + minimax(r_hi);
 
   // back to floats
   __m512 res =
