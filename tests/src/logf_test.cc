@@ -1,35 +1,49 @@
-#include <algorithm>
-#include <cmath>
-
-#include "gtest/gtest.h"
 #include "lalogf/logf.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <iostream>
+
+#include "boost/multiprecision/cpp_bin_float.hpp"
+#include "gtest/gtest.h"
+#include "omp.h"
+
 namespace {
+
+using Highp = boost::multiprecision::cpp_bin_float_double;
 
 constexpr unsigned kValuesPerSegment = 1000000;
 static_assert((kValuesPerSegment & 0xf) == 0);
 
-constexpr double kMaxUlps = 3.5;
+constexpr double kMaxUlps = 1.0;
 
-float getUlp(float x) {
-  return std::nextafter(x, std::numeric_limits<float>::infinity()) - x;
+constexpr std::uint32_t kMinBits = 0x00800000;  // 2^-126
+constexpr std::uint32_t kMaxBits = 0x7f800000;  // +INF
+
+float getNext(float x) {
+  return std::nextafter(x, std::numeric_limits<float>::infinity());
 }
+
+float getUlp(float x) { return getNext(x) - x; }
 }  // namespace
 
 TEST(lalogf, ulp) {
-  for (int e = -126; e < 127; ++e) {
-    float cur = std::pow(2.0, e);
-    float stride = cur / kValuesPerSegment;
-    for (unsigned i = 0; i < kValuesPerSegment; i += 16) {
-      float val = cur + stride * i;
-      double ref = std::log(static_cast<double>(val));
-      float res = lalogf(val);
-      float ulp = getUlp(res);
-      double ulp_error =
-          std::abs(ref - static_cast<double>(res)) / static_cast<double>(ulp);
-      ASSERT_LE(ulp_error, kMaxUlps);
-    }
+  double max_ulps = 0.0;
+
+#pragma omp parallel for reduction(max : max_ulps)
+  for (std::uint32_t bits = kMinBits; bits < kMaxBits; ++bits) {
+    float val;
+    std::memcpy(&val, &bits, 4);
+    Highp ref = log(static_cast<Highp>(val));
+    float res = lalogf(val);
+    float ulp = getUlp(res);
+    double ulp_error = static_cast<double>(abs(ref - static_cast<Highp>(res)) /
+                                           static_cast<Highp>(ulp));
+    max_ulps = std::max(max_ulps, ulp_error);
   }
+
+  ASSERT_LE(max_ulps, kMaxUlps);
 }
 
 TEST(lalogf_avx512, ulp) {
@@ -42,12 +56,12 @@ TEST(lalogf_avx512, ulp) {
         vals[j] = cur + stride * (i + j);
       }
 
-      std::array<double, 16> double_vals;
-      std::transform(vals.begin(), vals.end(), double_vals.begin(),
-                     [](float v) { return static_cast<double>(v); });
-      std::array<double, 16> res;
+      std::array<Highp, 16> highp_vals;
+      std::transform(vals.begin(), vals.end(), highp_vals.begin(),
+                     [](float v) { return static_cast<Highp>(v); });
+      std::array<Highp, 16> res;
       std::transform(vals.begin(), vals.end(), res.begin(),
-                     [](auto v) { return std::log(v); });
+                     [](Highp v) { return log(v); });
 
       __m512 vec = _mm512_loadu_ps(vals.data());
       __m512 res_vec = lalogf_avx512(vec);
@@ -55,10 +69,11 @@ TEST(lalogf_avx512, ulp) {
       _mm512_storeu_ps(res_vec_arr.data(), res_vec);
       std::array<double, 16> ulps;
       std::transform(res.begin(), res.end(), res_vec_arr.begin(), ulps.begin(),
-                     [](double ref, float val) {
+                     [](Highp ref, float val) {
                        float ulp = getUlp(val);
-                       return std::abs(ref - static_cast<double>(val)) /
-                              static_cast<double>(ulp);
+                       return static_cast<double>(
+                           abs(ref - static_cast<Highp>(val)) /
+                           static_cast<Highp>(ulp));
                      });
       double max_ulp = *std::max_element(ulps.begin(), ulps.end());
       ASSERT_LE(max_ulp, kMaxUlps);

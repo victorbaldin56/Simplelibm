@@ -3,6 +3,8 @@ benchmark/1.9.1
 
 [test_requires]
 gtest/1.16.0
+boost/1.87.0
+llvm-openmp/18.1.8
 
 [generators]
 CMakeDeps

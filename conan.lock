@@ -1,11 +1,20 @@
 {
     "version": "0.5",
     "requires": [
+        "zlib/1.3.1#b8bc2603263cf7eccbd6e17e66b0ed76%1733936244.862",
+        "mpfr/4.2.1#9387ed9b72866b2dda9690b287def172%1700759840.394",
+        "llvm-openmp/18.1.8#5e371038846bf9a660dc7746beb21e04%1719923677.897",
+        "libbacktrace/cci.20210118#a7691bfccd8caaf66309df196790a5a1%1722218217.276",
         "gtest/1.16.0#4fd8d9d80636ea9504de6a0ec1ab8686%1743410803.513",
+        "gmp/6.3.0#df20ffb6d21c34d67704305bcd1dea9e%1698225617.026",
+        "bzip2/1.0.8#00b4a4658791c1f06914e087f0e792f5%1744702067.178",
+        "boost/1.87.0#0c087f18c4e6487235dd10480613cbb5%1744128932.229",
         "benchmark/1.9.1#73d267daf0371b7f6605edef1594a681%1736524768.274"
     ],
     "build_requires": [
-        "cmake/3.31.6#ed0e6c1d49bd564ce6fed1a19653b86d%1740594968.467"
+        "m4/1.4.19#b38ced39a01e31fef5435bc634461fd2%1700758725.451",
+        "cmake/3.31.6#ed0e6c1d49bd564ce6fed1a19653b86d%1740594968.467",
+        "b2/5.3.2#7b5fabfe7088ae933fb3e78302343ea0%1744766677.76"
     ],
     "python_requires": [],
     "config_requires": []
