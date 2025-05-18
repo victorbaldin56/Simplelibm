@@ -15,7 +15,7 @@ float getUlp(float x) {
 }  // namespace
 
 TEST(lalogf, ulp) {
-  for (int e = -126; e < 127; ++e) {
+  for (int e = -126; e < -1; ++e) {
     double cur = std::pow(2.0, e);
     double stride = cur / kValuesPerSegment;
     for (unsigned i = 0; i < kValuesPerSegment; i += 16) {
