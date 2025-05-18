@@ -74,16 +74,17 @@ class FpBits<__m512> final {
 
   auto getValue() const noexcept { return _mm512_castsi512_ps(bits_); }
 
-  void setExp(__m512i exp_unbiased) noexcept {
+  void setExp(__m512i exp) noexcept {
     bits_ = _mm512_andnot_epi32(_mm512_set1_epi32(kExpMask), bits_);
-    __m512i biased = _mm512_slli_epi32(
-        _mm512_add_epi32(exp_unbiased, _mm512_set1_epi32(kExpBias)), kSigLen);
-    bits_ = _mm512_or_epi32(bits_, biased);
+    bits_ = _mm512_or_epi32(
+        bits_,
+        _mm512_slli_epi32(_mm512_add_epi32(exp, _mm512_set1_epi32(kExpBias)),
+                          kSigLen));
   }
 
-  void setSig(__m512i new_sig) noexcept {
+  void setSig(__m512i sig) noexcept {
     bits_ = _mm512_andnot_epi32(_mm512_set1_epi32(kSigMask), bits_);
-    bits_ = _mm512_or_epi32(bits_, new_sig);
+    bits_ = _mm512_or_epi32(bits_, sig);
   }
 
  private:

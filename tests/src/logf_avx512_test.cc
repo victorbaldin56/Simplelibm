@@ -10,7 +10,7 @@ namespace {
 constexpr unsigned kValuesPerSegment = 100;
 }
 
-TEST(lalogf_avx512, lalogf) {
+TEST(lalogf_avx512, ulp) {
   for (int e = -126; e < 127; ++e) {
     auto cur = std::pow(2.f, static_cast<float>(e));
     auto stride = cur / kValuesPerSegment;

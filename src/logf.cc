@@ -4146,7 +4146,7 @@ __m512d minimaxLnNear1Avx512(__m512d x) noexcept {
       x,
       _mm512_fmadd_pd(x, _mm512_fmadd_pd(x, _mm512_fmadd_pd(x, c4, c3), c2),
                       c1),
-      c0 * x);
+      c0);
 }
 }
 
@@ -4220,10 +4220,11 @@ __m512 lalogf_avx512(__m512 x) {
   auto cmp_eq_zero = _mm512_cmp_ps_mask(x, zero_vec, _CMP_EQ_OQ);
   auto cmp_eq_one = _mm512_cmp_ps_mask(x, one_vec, _CMP_EQ_OQ);
   auto special_mask = cmp_lt_zero | cmp_eq_zero | cmp_eq_one;
-  auto normal_mask = ~special_mask;
 
   detail::FpBits<__m512> bits(x);
   auto exp = _mm512_cvtepi32_ps(bits.expValue());
+
+  // double calculation to maintain precision
   auto exp_lo = extract64x8_lo(exp);
   auto exp_hi = extract64x8_hi(exp);
 
@@ -4253,11 +4254,13 @@ __m512 lalogf_avx512(__m512 x) {
       _mm512_fmadd_pd(exp_lo, log2_vec, t_lo) + minimaxLnNear1Avx512(r_lo);
   auto res_hi =
       _mm512_fmadd_pd(exp_hi, log2_vec, t_hi) + minimaxLnNear1Avx512(r_hi);
+
+  // back to floats
   auto res = _mm512_insertf32x8(_mm512_castps256_ps512(_mm512_cvtpd_ps(res_lo)),
                                 _mm512_cvtpd_ps(res_hi), 1);
 
   // special cases
-  __m512 special_vals = nan_vec;
+  auto special_vals = nan_vec;
   special_vals = _mm512_mask_blend_ps(cmp_eq_zero, special_vals, minus_inf_vec);
   special_vals = _mm512_mask_blend_ps(cmp_eq_one, special_vals, zero_vec);
   return _mm512_mask_blend_ps(special_mask, res, special_vals);
