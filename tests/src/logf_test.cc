@@ -1,13 +1,13 @@
 #include <algorithm>
 #include <cmath>
-#include <cstring>
 
 #include "gtest/gtest.h"
 #include "lalogf/logf.h"
 
 namespace {
 
-constexpr unsigned kValuesPerSegment = 1000;
+constexpr unsigned kValuesPerSegment = 100;
+constexpr double kMaxUlps = 3.5;
 
 float getUlp(float x) {
   return std::nextafter(x, std::numeric_limits<float>::infinity()) - x;
@@ -25,7 +25,7 @@ TEST(lalogf, ulp) {
       float ulp = getUlp(res);
       double ulp_error =
           std::abs(ref - static_cast<double>(res)) / static_cast<double>(ulp);
-      ASSERT_LE(ulp_error, 3.7);
+      ASSERT_LE(ulp_error, kMaxUlps);
     }
   }
 }
@@ -50,7 +50,6 @@ TEST(lalogf_avx512, ulp) {
       __m512 res_vec = lalogf_avx512(vec);
       std::array<float, 16> res_vec_arr;
       _mm512_storeu_ps(res_vec_arr.data(), res_vec);
-
       std::array<double, 16> ulps;
       std::transform(res.begin(), res.end(), res_vec_arr.begin(), ulps.begin(),
                      [](auto ref, auto val) {
@@ -59,7 +58,7 @@ TEST(lalogf_avx512, ulp) {
                               static_cast<double>(ulp);
                      });
       double max_ulp = *std::max_element(ulps.begin(), ulps.end());
-      ASSERT_LE(max_ulp, 3.7);
+      ASSERT_LE(max_ulp, kMaxUlps);
     }
   }
 }

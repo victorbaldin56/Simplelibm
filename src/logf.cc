@@ -4118,14 +4118,13 @@ constexpr std::uint32_t kLookupBits = 12;
 constexpr std::uint32_t kLookupBitsOffset = detail::kSigLen - kLookupBits;
 constexpr std::uint32_t kLookupMask = ((1 << kLookupBits) - 1)
                                       << kLookupBitsOffset;
-constexpr float kLog2 =
+constexpr double kLog2 =
     0x1.62e42fefa39ef35793c7673007e5ed5e81e6864ce5316c5b141a2eb71755f457cf70ec40dbd75930ab2aa5f695f43621da5d5c6b827042884eae765222d38p-1;
 
 // generated with sollya sollya_gen/minimax.sollya
 constexpr double kMinimaxCoeffs[] = {-0x1p1, 0x1.d5553807c8777p1,
                                      -0x1.3fffa8355313dp1, 0x1.fffea14d34134p-1,
                                      -0x1.5553825c2686fp-3};
-
 double minimaxLnNear1(double x) noexcept {
   return std::fma(
       x,
@@ -4164,11 +4163,11 @@ float lalogf(float x) {
   }
 
   detail::FpBits<float> bits(x);
-  auto exp = bits.expValue();
-  auto sig = bits.sig();
+  std::int32_t exp = bits.expValue();
+  std::uint32_t sig = bits.sig();
 
   bits.setExp(0);
-  auto new_x = bits.getValue();
+  float new_x = bits.getValue();
 
   std::uint32_t sig_part =
       sig & kLookupMask;  // oldest 12 bits to index lookup table
@@ -4185,11 +4184,11 @@ float lalogf(float x) {
 namespace {
 
 __m512d minimaxLnNear1Avx512(__m512d x) noexcept {
-  const auto c4 = _mm512_set1_pd(kMinimaxCoeffs[4]);
-  const auto c3 = _mm512_set1_pd(kMinimaxCoeffs[3]);
-  const auto c2 = _mm512_set1_pd(kMinimaxCoeffs[2]);
-  const auto c1 = _mm512_set1_pd(kMinimaxCoeffs[1]);
-  const auto c0 = _mm512_set1_pd(kMinimaxCoeffs[0]);
+  const __m512d c4 = _mm512_set1_pd(kMinimaxCoeffs[4]);
+  const __m512d c3 = _mm512_set1_pd(kMinimaxCoeffs[3]);
+  const __m512d c2 = _mm512_set1_pd(kMinimaxCoeffs[2]);
+  const __m512d c1 = _mm512_set1_pd(kMinimaxCoeffs[1]);
+  const __m512d c0 = _mm512_set1_pd(kMinimaxCoeffs[0]);
   return _mm512_fmadd_pd(
       x,
       _mm512_fmadd_pd(x, _mm512_fmadd_pd(x, _mm512_fmadd_pd(x, c4, c3), c2),
@@ -4197,11 +4196,11 @@ __m512d minimaxLnNear1Avx512(__m512d x) noexcept {
       c0);
 }
 
-auto extract64x8_lo(__m512 x) {
+__m512d extract64x8_lo(__m512 x) {
   return _mm512_cvtps_pd(_mm512_extractf32x8_ps(x, 0));
 }
 
-auto extract64x8_hi(__m512 x) {
+__m512d extract64x8_hi(__m512 x) {
   return _mm512_cvtps_pd(_mm512_extractf32x8_ps(x, 1));
 }
 }  // namespace
@@ -4210,57 +4209,59 @@ auto extract64x8_hi(__m512 x) {
  * Vectorized logf.
  */
 __m512 lalogf_avx512(__m512 x) {
-  const auto zero_vec = _mm512_set1_ps(0.f);
-  const auto one_vec = _mm512_set1_ps(1.f);
-  const auto log2_vec = _mm512_set1_pd(kLog2);
-  const auto minus_inf_vec = _mm512_set1_ps(-Limits::infinity());
-  const auto nan_vec = _mm512_set1_ps(Limits::quiet_NaN());
+  const __m512 zero_vec = _mm512_set1_ps(0.f);
+  const __m512 one_vec = _mm512_set1_ps(1.f);
+  const __m512 minus_inf_vec = _mm512_set1_ps(-Limits::infinity());
+  const __m512 nan_vec = _mm512_set1_ps(Limits::quiet_NaN());
 
-  auto cmp_lt_zero = _mm512_cmp_ps_mask(x, zero_vec, _CMP_LT_OQ);
-  auto cmp_eq_zero = _mm512_cmp_ps_mask(x, zero_vec, _CMP_EQ_OQ);
-  auto cmp_eq_one = _mm512_cmp_ps_mask(x, one_vec, _CMP_EQ_OQ);
-  auto special_mask = cmp_lt_zero | cmp_eq_zero | cmp_eq_one;
+  const __m512d log2_vec = _mm512_set1_pd(kLog2);
+
+  __mmask16 cmp_lt_zero = _mm512_cmp_ps_mask(x, zero_vec, _CMP_LT_OQ);
+  __mmask16 cmp_eq_zero = _mm512_cmp_ps_mask(x, zero_vec, _CMP_EQ_OQ);
+  __mmask16 cmp_eq_one = _mm512_cmp_ps_mask(x, one_vec, _CMP_EQ_OQ);
+  __mmask16 special_mask = cmp_lt_zero | cmp_eq_zero | cmp_eq_one;
 
   detail::FpBits<__m512> bits(x);
-  auto exp = _mm512_cvtepi32_ps(bits.expValue());
+  __m512 exp = _mm512_cvtepi32_ps(bits.expValue());
 
   // double calculation to maintain precision
-  auto exp_lo = extract64x8_lo(exp);
-  auto exp_hi = extract64x8_hi(exp);
+  __m512d exp_lo = extract64x8_lo(exp);
+  __m512d exp_hi = extract64x8_hi(exp);
 
-  auto sig = bits.sig();
+  __m512i sig = bits.sig();
 
   bits.setExp(_mm512_set1_epi32(0));
-  auto new_x = bits.getValue();
-  auto new_x_lo = extract64x8_lo(new_x);
-  auto new_x_hi = extract64x8_hi(new_x);
+  __m512 new_x = bits.getValue();
+  __m512d new_x_lo = extract64x8_lo(new_x);
+  __m512d new_x_hi = extract64x8_hi(new_x);
 
-  auto sig_parts = _mm512_and_epi32(sig, _mm512_set1_epi32(kLookupMask));
-  auto indices = _mm512_srli_epi32(sig_parts, kLookupBitsOffset);
-  auto gather_indices_lo = _mm512_extracti32x8_epi32(indices, 0);
-  auto gather_indices_hi = _mm512_extracti32x8_epi32(indices, 1);
-  auto t_lo = _mm512_i32gather_pd(gather_indices_lo, kLogfTable, 8);
-  auto t_hi = _mm512_i32gather_pd(gather_indices_hi, kLogfTable, 8);
+  __m512i sig_parts = _mm512_and_epi32(sig, _mm512_set1_epi32(kLookupMask));
+  __m512i indices = _mm512_srli_epi32(sig_parts, kLookupBitsOffset);
+  __m256i gather_indices_lo = _mm512_extracti32x8_epi32(indices, 0);
+  __m256i gather_indices_hi = _mm512_extracti32x8_epi32(indices, 1);
+  __m512d t_lo = _mm512_i32gather_pd(gather_indices_lo, kLogfTable, 8);
+  __m512d t_hi = _mm512_i32gather_pd(gather_indices_hi, kLogfTable, 8);
 
   detail::FpBits<__m512> xibits(sig_parts);
-  auto xibits_val = xibits.getValue();
-  auto xis_lo = extract64x8_lo(xibits_val);
-  auto xis_hi = extract64x8_hi(xibits_val);
+  __m512 xibits_val = xibits.getValue();
+  __m512d xis_lo = extract64x8_lo(xibits_val);
+  __m512d xis_hi = extract64x8_hi(xibits_val);
 
-  auto r_lo = new_x_lo / xis_lo;
-  auto r_hi = new_x_hi / xis_hi;
+  __m512d r_lo = new_x_lo / xis_lo;
+  __m512d r_hi = new_x_hi / xis_hi;
 
-  auto res_lo =
+  __m512d res_lo =
       _mm512_fmadd_pd(exp_lo, log2_vec, t_lo) + minimaxLnNear1Avx512(r_lo);
-  auto res_hi =
+  __m512d res_hi =
       _mm512_fmadd_pd(exp_hi, log2_vec, t_hi) + minimaxLnNear1Avx512(r_hi);
 
   // back to floats
-  auto res = _mm512_insertf32x8(_mm512_castps256_ps512(_mm512_cvtpd_ps(res_lo)),
-                                _mm512_cvtpd_ps(res_hi), 1);
+  __m512 res =
+      _mm512_insertf32x8(_mm512_castps256_ps512(_mm512_cvtpd_ps(res_lo)),
+                         _mm512_cvtpd_ps(res_hi), 1);
 
   // special cases
-  auto special_vals = nan_vec;
+  __m512 special_vals = nan_vec;
   special_vals = _mm512_mask_blend_ps(cmp_eq_zero, special_vals, minus_inf_vec);
   special_vals = _mm512_mask_blend_ps(cmp_eq_one, special_vals, zero_vec);
   return _mm512_mask_blend_ps(special_mask, res, special_vals);
