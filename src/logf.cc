@@ -4122,9 +4122,9 @@ constexpr double kLog2 =
     0x1.62e42fefa39ef35793c7673007e5ed5e81e6864ce5316c5b141a2eb71755f457cf70ec40dbd75930ab2aa5f695f43621da5d5c6b827042884eae765222d38p-1;
 
 // generated with sollya sollya_gen/minimax.sollya
-constexpr double kMinimaxCoeffs[] = {-0x1.0aa6b5dff6e45p1, 0x1.fff02cd25dec6p1,
-                                     -0x1.7fe8433754464p1, 0x1.5535aeeed4b13p0,
-                                     -0x1.ffc0b327d1a68p-3};
+constexpr double kMinimaxCoeffs[] = {
+    0x1p0, -0x1.0000000000001p-1, 0x1.555555556ec68p-2, -0x1.00000027dfd61p-2,
+    0x1.9965ff54a8ed2p-3};
 
 double minimax(double x) noexcept {
   return std::fma(
@@ -4176,8 +4176,8 @@ float lalogf(float x) {
   double t = kLogfTable[index];
   detail::FpBits<float> xibits(sig_part);
   double xi = xibits.getValue();
-  double r = new_x / xi;
-  return std::fma(exp, kLog2, t) + minimax(r);
+  double r = new_x / xi - 1;
+  return std::fma(exp, kLog2, t) + minimax(r) * r;
 }
 
 #ifdef __AVX512F__
@@ -4216,6 +4216,7 @@ __m512 lalogf_avx512(__m512 x) {
   const __m512 nan_vec = _mm512_set1_ps(Limits::quiet_NaN());
 
   const __m512d log2_vec = _mm512_set1_pd(kLog2);
+  const __m512d one_vec_d = _mm512_set1_pd(1.0);
 
   __mmask16 cmp_lt_zero = _mm512_cmp_ps_mask(x, zero_vec, _CMP_LT_OQ);
   __mmask16 cmp_eq_zero = _mm512_cmp_ps_mask(x, zero_vec, _CMP_EQ_OQ);
@@ -4248,11 +4249,13 @@ __m512 lalogf_avx512(__m512 x) {
   __m512d xis_lo = extract64x8_lo(xibits_val);
   __m512d xis_hi = extract64x8_hi(xibits_val);
 
-  __m512d r_lo = new_x_lo / xis_lo;
-  __m512d r_hi = new_x_hi / xis_hi;
+  __m512d r_lo = new_x_lo / xis_lo - one_vec_d;
+  __m512d r_hi = new_x_hi / xis_hi - one_vec_d;
 
-  __m512d res_lo = _mm512_fmadd_pd(exp_lo, log2_vec, t_lo) + minimax(r_lo);
-  __m512d res_hi = _mm512_fmadd_pd(exp_hi, log2_vec, t_hi) + minimax(r_hi);
+  __m512d res_lo =
+      _mm512_fmadd_pd(exp_lo, log2_vec, t_lo) + minimax(r_lo) * r_lo;
+  __m512d res_hi =
+      _mm512_fmadd_pd(exp_hi, log2_vec, t_hi) + minimax(r_hi) * r_hi;
 
   // back to floats
   __m512 res =
