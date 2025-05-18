@@ -8,11 +8,8 @@
 
 namespace {
 
-/**
- * Lookup table for 2nd argument reduction.
- *
- * Generated with sollya sollya_gen/logf.sollya
- */
+// Lookup table for 2nd argument reduction.
+// Generated with sollya sollya_scripts/logf.sollya
 constexpr double kLogfTable[] = {
     0,
     0x1.fff000aaa2ab1p-13,
@@ -4112,7 +4109,7 @@ constexpr double kLogfTable[] = {
     0x1.62d42fafa2499p-1,
 };
 
-constexpr double kRev[] = {
+constexpr double kInverse[] = {
     0x1p0,
     0x1.ffe001ffe002p-1,
     0x1.ffc007ff002p-1,
@@ -8220,7 +8217,7 @@ constexpr std::uint32_t kLookupMask = ((1 << kLookupBits) - 1)
 constexpr double kLog2 =
     0x1.62e42fefa39ef35793c7673007e5ed5e81e6864ce5316c5b141a2eb71755f457cf70ec40dbd75930ab2aa5f695f43621da5d5c6b827042884eae765222d38p-1;
 
-// generated with sollya sollya_gen/minimax.sollya
+// generated with sollya sollya_scripts/minimax.sollya
 constexpr double kMinimaxCoeffs[] = {
     0x1p0, -0x1.0000000000001p-1, 0x1.555555556ec68p-2, -0x1.00000027dfd61p-2,
     0x1.9965ff54a8ed2p-3};
@@ -8275,7 +8272,7 @@ float lalogf(float x) {
   double t = kLogfTable[index];
   detail::FpBits<float> xibits(sig_part);
   double xi = xibits.getValue();
-  double r = std::fma(new_x, kRev[index], -1.0);
+  double r = std::fma(new_x, kInverse[index], -1.0);
   return std::fma(exp, kLog2, t) + minimax(r) * r;
 }
 
@@ -8343,8 +8340,8 @@ __m512 lalogf_avx512(__m512 x) {
   __m512d t_lo = _mm512_i32gather_pd(gather_indices_lo, kLogfTable, 8);
   __m512d t_hi = _mm512_i32gather_pd(gather_indices_hi, kLogfTable, 8);
 
-  __m512d rev_lo = _mm512_i32gather_pd(gather_indices_lo, kRev, 8);
-  __m512d rev_hi = _mm512_i32gather_pd(gather_indices_hi, kRev, 8);
+  __m512d rev_lo = _mm512_i32gather_pd(gather_indices_lo, kInverse, 8);
+  __m512d rev_hi = _mm512_i32gather_pd(gather_indices_hi, kInverse, 8);
 
   detail::FpBits<__m512> xibits(sig_parts);
   __m512 xibits_val = xibits.getValue();
