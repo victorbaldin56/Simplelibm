@@ -8,6 +8,9 @@
 
 namespace {
 
+using Limits = std::numeric_limits<float>;
+static_assert(Limits::is_iec559);
+
 // Lookup table for 2nd argument reduction.
 // Generated with sollya sollya_scripts/logf.sollya
 constexpr double kLogfTable[] = {
@@ -8207,8 +8210,6 @@ constexpr double kInverse[] = {
     0x1.001001001001p-1,
     0x1.0008004002001p-1,
 };
-
-using Limits = std::numeric_limits<float>;
 
 constexpr std::uint32_t kLookupBits = 12;
 constexpr std::uint32_t kLookupBitsOffset = detail::kSigLen - kLookupBits;

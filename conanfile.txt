@@ -5,6 +5,7 @@ benchmark/1.9.1
 gtest/1.16.0
 boost/1.87.0
 llvm-openmp/18.1.8
+fmt/11.2.0
 
 [generators]
 CMakeDeps
