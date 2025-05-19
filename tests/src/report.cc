@@ -51,7 +51,7 @@ int main() try {
     std::memcpy(&bits_highp, &res_highp_f, 4);
     std::uint32_t diff = bits ^ bits_highp;
 
-    std::uint32_t first_bit = (diff ? 32 - __builtin_clz(diff) : -1);
+    std::uint32_t first_bit = (diff ? __builtin_clz(diff) - 8 : -1);
     logf_report << fmt::format("{:.8e},{:.8e},{:.8e},{:.8e},{}\n", x, res,
                                abs_error, rel_error, first_bit);
   }
@@ -100,7 +100,7 @@ int main() try {
 
     __mmask16 zero_m = _mm512_cmpeq_epi32_mask(diff, _mm512_set1_epi32(0));
     __m512i pos =
-        _mm512_sub_epi32(_mm512_set1_epi32(32), _mm512_lzcnt_epi32(diff));
+        _mm512_sub_epi32(_mm512_lzcnt_epi32(diff), _mm512_set1_epi32(8));
     __m512i first_bit =
         _mm512_mask_mov_epi32(pos, zero_m, _mm512_set1_epi32(-1));
     std::array<std::uint32_t, kElementsInVector> first_bits;

@@ -1,4 +1,4 @@
-2025-05-15T09:41:53+00:00
+2025-05-19T09:05:33+00:00
 Running ./release/bench/bench
 Run on (12 X 4400 MHz CPU s)
 CPU Caches:
@@ -6,10 +6,30 @@ CPU Caches:
   L1 Instruction 32 KiB (x6)
   L2 Unified 512 KiB (x6)
   L3 Unified 12288 KiB (x1)
-Load Average: 0.19, 0.10, 0.02
+Load Average: 0.50, 0.23, 0.15
 ***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
 name,iterations,real_time,cpu_time,time_unit,bytes_per_second,items_per_second,label,error_occurred,error_message,"CPE"
-"BM_LogfLatency/repeats:8_mean",8,14.9154,14.9036,ns,,,,,,16.2298
-"BM_LogfLatency/repeats:8_median",8,14.8786,14.8664,ns,,,,,,16.1879
-"BM_LogfLatency/repeats:8_stddev",8,0.074193,0.0736496,ns,,,,,,0.0863991
-"BM_LogfLatency/repeats:8_cv",8,0.00497425,0.00494174,,,,,,,0.00532349
+"BM_LogfLatency",1,3.40641e+10,3.4039e+10,ns,,,,,,15.9996
+"BM_LogfLatency",1,3.40282e+10,3.40041e+10,ns,,,,,,15.9829
+"BM_LogfLatency",1,3.40267e+10,3.40031e+10,ns,,,,,,15.981
+"BM_LogfLatency",1,3.40264e+10,3.40026e+10,ns,,,,,,15.9811
+"BM_LogfLatency",1,3.4029e+10,3.40049e+10,ns,,,,,,15.9836
+"BM_LogfLatency",1,3.40249e+10,3.40014e+10,ns,,,,,,15.9799
+"BM_LogfLatency",1,3.40272e+10,3.40036e+10,ns,,,,,,15.9809
+"BM_LogfLatency",1,3.4026e+10,3.40023e+10,ns,,,,,,15.9806
+"BM_LogfLatency_mean",8,3.40316e+10,3.40076e+10,ns,,,,,,15.9837
+"BM_LogfLatency_median",8,3.40269e+10,3.40033e+10,ns,,,,,,15.9811
+"BM_LogfLatency_stddev",8,1.32019e+07,1.27385e+07,ns,,,,,,0.00654655
+"BM_LogfLatency_cv",8,0.000387932,0.000374577,,,,,,,0.000409577
+"BM_LogfAvx512Throughput",1,5.2459e+09,5.24182e+09,ns,,,,,,2.16461
+"BM_LogfAvx512Throughput",1,5.23231e+09,5.22877e+09,ns,,,,,,2.15841
+"BM_LogfAvx512Throughput",1,5.23235e+09,5.22886e+09,ns,,,,,,2.15838
+"BM_LogfAvx512Throughput",1,5.23258e+09,5.22892e+09,ns,,,,,,2.15861
+"BM_LogfAvx512Throughput",1,5.23292e+09,5.22937e+09,ns,,,,,,2.15867
+"BM_LogfAvx512Throughput",1,5.23297e+09,5.2293e+09,ns,,,,,,2.15878
+"BM_LogfAvx512Throughput",1,5.23244e+09,5.22882e+09,ns,,,,,,2.15852
+"BM_LogfAvx512Throughput",1,5.23304e+09,5.2295e+09,ns,,,,,,2.15876
+"BM_LogfAvx512Throughput_mean",8,5.23431e+09,5.23067e+09,ns,,,,,,2.15934
+"BM_LogfAvx512Throughput_median",8,5.23275e+09,5.22911e+09,ns,,,,,,2.15864
+"BM_LogfAvx512Throughput_stddev",8,4.69036e+06,4.51389e+06,ns,,,,,,0.00213493
+"BM_LogfAvx512Throughput_cv",8,0.000896079,0.000862966,,,,,,,0.000988696
